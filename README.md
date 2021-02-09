@@ -97,3 +97,78 @@ npm --prefix backend  install
 # OR
 npm run setup
 ```
+
+
+
+
+
+## Installing a real Webserver
+
+```
+sudo apt install nginx-full
+cd frontend
+yarn build
+sudo cp -r build/* /var/www/html/
+```
+
+## Edit the nginx configuration
+
+```
+sudo apt install nginx-full
+sudo nano /etc/nginx/sites-enabled/default
+```
+
+```
+server {
+  listen      80 default_server;
+  listen [::]:80 default_server;
+
+  root /var/www/html;
+
+  index index.html index.htm index.nginx-debian.html;
+
+  server_name _;
+
+  location /api { 
+    proxy_pass http://127.0.0.1:5001;
+  }
+
+  location / {
+    try_files $uri $uri/ =404;
+  }
+}
+```
+
+```
+sudo systemctl restart nginx
+```
+
+## Edit systemd configuration
+
+```
+sudo cp -r backend /var/www/
+sudo nano /etc/systemd/system/backend.service
+```
+
+```
+[Unit]
+Description=backend service for my webapp
+Documentation=https://example.com
+After=network.target
+
+[Service]
+Environment=PORT=5001
+Type=simple
+User=www-data
+ExecStart=/usr/bin/node /var/www/backend/index.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```
+sudo systemctl daemon-reload  # read the service we just created (once)
+sudo systemctl enable backend # run with every boot (once)
+sudo systemctl start  backend
+```
